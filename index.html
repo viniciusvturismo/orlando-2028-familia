@@ -69,6 +69,30 @@ a{color:var(--teal)}
 .steps p{font-size:14.5px;color:var(--muted);margin:6px 0 0}
 .steps .val{display:inline-block;margin-top:8px;font-weight:700;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-size:14px}
 
+/* Linha do tempo mês a mês */
+.tl-legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:22px;font-size:13.5px;color:var(--muted)}
+.tl-legend span{display:inline-flex;align-items:center;gap:8px}
+.tl-legend i{width:14px;height:14px;border-radius:4px;display:inline-block}
+.tl-year{margin-top:26px;font-size:13px;font-weight:800;letter-spacing:.12em;color:var(--muted)}
+.tl{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px;margin-top:10px}
+.mo{border-radius:12px;padding:11px 12px;border:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;gap:2px;min-height:96px}
+.mo .m{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.mo .a{font-weight:800;font-size:15px;font-variant-numeric:tabular-nums}
+.mo .t{font-size:12px;color:var(--muted);line-height:1.35}
+.mo.p1{background:var(--teal-d);border-color:var(--teal-d);color:#F5F2EB}
+.mo.p1 .m,.mo.p1 .t{color:#A9D2CA}
+.mo.p2{background:var(--gold-soft);border-color:var(--gold)}
+.mo.p2 .m{color:var(--warn)}
+.mo.mk{border:2px dashed var(--teal)}
+.mo.mk .a{color:var(--teal)}
+.mo.trip{background:var(--gold);border-color:var(--gold);color:#1C1608}
+.mo.trip .m,.mo.trip .t{color:#3A2C0C}
+.tl-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}
+.tl-sum div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.tl-sum small{display:block;color:var(--muted);font-size:12.5px}
+.tl-sum b{font-size:19px;font-variant-numeric:tabular-nums}
+@media (max-width:620px){.tl-sum{grid-template-columns:1fr}.tl{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
 /* Serviços */
 .svc{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:28px}
 .svc-row{display:grid;grid-template-columns:1fr auto auto;gap:6px 22px;padding:15px 22px;border-top:1px solid var(--line);align-items:baseline}
@@ -202,6 +226,26 @@ footer img{width:130px}
       <li class="gold"><div class="dot">3</div><div class="when">Até 90 dias antes do embarque</div><h3>Você quita o saldo</h3><p>Saldo = valor final − o que você já pagou. Se ficou mais barato, o saldo diminui. Se ficou mais caro, a diferença entra aqui.</p><span class="val num">10x sem juros no cartão</span></li>
       <li><div class="dot">4</div><div class="when">Logo após o saldo</div><h3>Emitimos tudo</h3><p>Aéreo, hotel, ingressos, carro e seguro emitidos, com documentos organizados e nosso suporte até a volta.</p></li>
     </ol>
+  </div>
+</section>
+
+<section class="band" id="linha-do-tempo" style="padding-top:0">
+  <div class="wrap">
+    <div class="eyebrow">Linha do tempo do pagamento</div>
+    <h2 style="margin-top:8px">Mês a mês, da reserva ao embarque</h2>
+    <p class="lead">Exemplo para contratação em novembro de 2026 e embarque em julho de 2028. As parcelas do saldo são estimadas e mudam conforme os valores oficiais.</p>
+    <div class="tl-legend">
+      <span><i style="background:var(--teal-d)"></i>1ª parte · 10x sem juros</span>
+      <span><i style="background:var(--gold-soft);border:1px solid var(--gold)"></i>Saldo · 10x sem juros (estimado)</span>
+      <span><i style="border:2px dashed var(--teal)"></i>Marco importante</span>
+      <span><i style="background:var(--gold)"></i>Viagem</span>
+    </div>
+    <div id="tlWrap"></div>
+    <div class="tl-sum">
+      <div><small>1ª parte · nov/2026 a ago/2027</small><b id="sum1">10x R$ 4.435,29</b></div>
+      <div><small>Saldo estimado · out/2027 a jul/2028</small><b id="sum2">10x ≈ R$ 4.435,29</b></div>
+      <div><small>Total estimado da viagem</small><b id="sum3">R$ 88.705,80</b></div>
+    </div>
   </div>
 </section>
 
@@ -370,6 +414,31 @@ footer img{width:130px}
   }
   $("var").addEventListener("input",calc); $("fx").addEventListener("input",calc);
   calc();
+
+  // Linha do tempo mês a mês
+  var MES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  var parc = Math.round(pago/10*100)/100;
+  var saldoParc = Math.round((totalBRL-pago)/10*100)/100;
+  var cells = [];
+  for (var k=0; k<21; k++){
+    var mi = (10+k)%12, yr = 2026 + Math.floor((10+k)/12);
+    var c = {m:MES[mi]+"/"+String(yr).slice(2), y:yr, cls:"", a:"", t:""};
+    if (k<=9){ c.cls="p1"; c.a=brl(parc); c.t="Parcela "+(k+1)+" de 10"+(k===0?" · reserva garantida":""); }
+    else if (k===10){ c.cls="mk"; c.a="Valores oficiais"; c.t="Previsão. Enviamos o comparativo estimado × final e o valor do saldo"; }
+    else { var n=k-10; c.cls="p2"; c.a="≈ "+brl(saldoParc); c.t="Saldo "+n+" de 10";
+      if (k===17){ c.cls="p2 mk"; c.t+=" · prazo final para fechar o saldo no cartão e emitirmos tudo"; }
+      if (k===20){ c.cls="trip"; c.t="Saldo 10 de 10 · embarque para Orlando!"; } }
+    cells.push(c);
+  }
+  var out="", lastY=0;
+  cells.forEach(function(c){
+    if (c.y!==lastY){ if(lastY) out+="</div>"; out+='<div class="tl-year">'+c.y+'</div><div class="tl">'; lastY=c.y; }
+    out+='<div class="mo '+c.cls+'"><span class="m">'+c.m+'</span><span class="a">'+c.a+'</span><span class="t">'+c.t+'</span></div>';
+  });
+  $("tlWrap").innerHTML = out + "</div>";
+  $("sum1").textContent = "10x " + brl(parc);
+  $("sum2").textContent = "10x ≈ " + brl(saldoParc);
+  $("sum3").textContent = brl(totalBRL);
 })();
 </script>
 
